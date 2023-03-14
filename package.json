@@ -1,0 +1,34 @@
+{
+  "name": "eslint-plugin-eslint-env",
+  "version": "",
+  "license": "ISC",
+  "author": "Francesco Trotta <ft@fasttime.org> (https://github.com/fasttime)",
+  "files": [
+    "lib"
+  ],
+  "main": "lib/plugin.js",
+  "scripts": {
+    "build": "npm run clean && npm run lint && npm run coverage",
+    "clean": "node dev/clean.mjs",
+    "coverage": "node dev/coverage.mjs",
+    "lint": "eslint . --format compact --ignore-path .gitignore",
+    "test": "mocha --check-leaks"
+  },
+  "devDependencies": {
+    "@origin-1/eslint-config": "latest",
+    "c8js": "latest",
+    "eslint": "latest",
+    "eslint-plugin-vue": "9",
+    "mocha": "latest"
+  },
+  "peerDependencies": {
+    "eslint": ">=8"
+  },
+  "engines": {
+    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+  },
+  "exports": {
+    ".": "./lib/plugin.js",
+    "./package.json": "./package.json"
+  }
+}

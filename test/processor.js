@@ -106,6 +106,50 @@ it
     },
 );
 
+it
+(
+    'keeps comments single-lined',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code =
+        unindent
+        `
+        function foo()
+        {
+            bar(); /* eslint-env */ baz();
+        }
+        `;
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'max-statements-per-line': 'error' } };
+        const result = linter.verify(code, config);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].ruleId, 'max-statements-per-line');
+    },
+);
+it
+(
+    'keeps comments multi-lined',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code =
+        unindent
+        `
+        function foo()
+        {
+            return /* eslint-env
+            browser */ document;
+        }
+        `;
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'no-unreachable': 'error' } };
+        const result = linter.verify(code, config);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].ruleId, 'no-unreachable');
+    },
+);
+
 describe
 (
     'adjusts message locations',

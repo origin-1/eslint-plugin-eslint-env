@@ -71,6 +71,41 @@ it
     },
 );
 
+it
+(
+    'filters out disabled rules in lines with insertions',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code = 'foo /* eslint-env node */ ()';
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
+        const result = linter.verify(code, config);
+        assert.deepEqual(result, []);
+    },
+);
+
+it
+(
+    'does not filter out disabled rules in unprocessed lines',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code =
+        unindent
+        `
+        foo /* eslint-env node */ ()
+        ${'/'.repeat(100)}
+        `;
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
+        const result = linter.verify(code, config);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].line, 2);
+        assert.equal(result[0].endLine, 2);
+    },
+);
+
 describe
 (
     'adjusts message locations',

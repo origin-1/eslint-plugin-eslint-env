@@ -241,3 +241,67 @@ describe
         );
     },
 );
+
+it
+(
+    'adjusts autofix locations',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code = '/* eslint-env jquery */ _ => _';
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'arrow-parens': 'error' } };
+        const report = linter.verifyAndFix(code, config);
+        assert.equal(report.fixed, true);
+        assert.equal(report.output, '/* eslint-env jquery */ (_) => _');
+    },
+);
+
+it
+(
+    'suppresses autofixes that overlap with whole eslint-env comments',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code = 'let foo = () => {return void /* eslint-env jquery */ 0};';
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'arrow-body-style': 'error' } };
+        const result = linter.verify(code, config);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].ruleId, 'arrow-body-style');
+        assert(!result[0].fix);
+    },
+);
+
+it
+(
+    'suppresses autofixes that overlap with the start of eslint-env comments',
+    () =>
+    {
+        const code = 'foo; /* eslint-env jquery */ bar;';
+        const filename = 'test.js';
+        const processor = new EslintEnvProcessor();
+        processor.preprocess(code, filename);
+        const message = { ruleId: 'foobar', fix: { range: [0, 8], text: 'foo; /*' } };
+        const result = processor.postprocess([[message]], filename);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].ruleId, 'foobar');
+        assert(!result[0].fix);
+    },
+);
+
+it
+(
+    'does not suppress autofixes that don\'t overlap with eslint-env comments',
+    () =>
+    {
+        const linter = new Linter({ configType: 'flat' });
+        const code = 'let foo = () => {return void 0}; /* eslint-env jquery */';
+        const processor = new EslintEnvProcessor();
+        const config = { files: ['*'], processor, rules: { 'arrow-body-style': 'error' } };
+        const result = linter.verify(code, config);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].ruleId, 'arrow-body-style');
+        assert(result[0].fix);
+    },
+);

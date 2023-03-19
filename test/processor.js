@@ -150,6 +150,18 @@ it
     },
 );
 
+it
+(
+    'preserves line break style',
+    () =>
+    {
+        const code = '/*eslint-env\r\n*/';
+        const processor = new EslintEnvProcessor();
+        const [{ text }] = processor.preprocess(code);
+        assert.equal(text, '/*\r\nglobal\r\n*/');
+    },
+);
+
 describe
 (
     'adjusts message locations',

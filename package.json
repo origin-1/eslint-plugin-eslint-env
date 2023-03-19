@@ -18,8 +18,8 @@
     "@origin-1/eslint-config": "latest",
     "c8js": "latest",
     "eslint": "latest",
-    "eslint-plugin-vue": "9",
-    "mocha": "latest"
+    "eslint-plugin-cypress": "latest",
+    "mocha": "9"
   },
   "peerDependencies": {
     "eslint": ">=8"

@@ -46,6 +46,32 @@ describe
             },
         );
 
+        it
+        (
+            'formats a global comment as expected',
+            () =>
+            {
+                const code = '/* eslint-env test/test */';
+                const plugins =
+                {
+                    'test':
+                    {
+                        environments:
+                        {
+                            'test':
+                            {
+                                globals:
+                                { TRUE: true, FALSE: false, WRITABLE: 'writable', NULL: null },
+                            },
+                        },
+                    },
+                };
+                const processor = new EslintEnvProcessor({ plugins });
+                const [{ text }] = processor.preprocess(code);
+                assert.equal(text, '/* global FALSE:false NULL TRUE:true WRITABLE:writable */');
+            },
+        );
+
         // #region Problem Filtering
 
         it

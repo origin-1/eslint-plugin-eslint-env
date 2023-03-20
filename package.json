@@ -7,11 +7,13 @@
     "lib"
   ],
   "main": "lib/plugin.js",
+  "repository": "github:fasttime/eslint-plugin-eslint-env",
   "scripts": {
     "build": "npm run clean && npm run lint && npm run coverage",
     "clean": "node dev/clean.mjs",
     "coverage": "node dev/coverage.mjs",
     "lint": "eslint . --format compact --ignore-path .gitignore",
+    "release": "npm version -m 'Version %s'",
     "test": "mocha --check-leaks"
   },
   "devDependencies": {

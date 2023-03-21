@@ -46,9 +46,11 @@ describe
             },
         );
 
+        // #region Comment Formatting
+
         it
         (
-            'formats a global comment as expected',
+            'replaces an eslint-env comment as expected',
             () =>
             {
                 const code = '/* eslint-env test/test */';
@@ -74,15 +76,29 @@ describe
 
         it
         (
-            'formats an empty global comment',
+            'replaces an empty eslint-env comment without surrounding spaces',
             () =>
             {
                 const code = '/*eslint-env*/';
                 const processor = new EslintEnvProcessor();
                 const [{ text }] = processor.preprocess(code);
-                assert.equal(text, '/* global */');
+                assert.equal(text, '/*global*/');
             },
         );
+
+        it
+        (
+            'replaces an empty eslint-env comment with multiple terminating spaces',
+            () =>
+            {
+                const code = '/*eslint-env\t\t*/';
+                const processor = new EslintEnvProcessor();
+                const [{ text }] = processor.preprocess(code);
+                assert.equal(text, '/*global */');
+            },
+        );
+
+        // #endregion
 
         // #region Problem Filtering
 
@@ -339,17 +355,21 @@ describe
 
         it
         (
-            'suppresses autofixes that overlap with the start of eslint-env comments',
+            'suppresses autofixes that overlap with part of an eslint-env comment',
             () =>
             {
-                const code = 'foo; /* eslint-env jquery */ bar;';
-                const filename = 'test.js';
+                const linter = new Linter({ configType: 'flat' });
+                const code = '/*eslint-env amd*/';
                 const processor = new EslintEnvProcessor();
-                processor.preprocess(code, filename);
-                const message = { ruleId: 'foobar', fix: { range: [0, 8], text: 'foo; /*' } };
-                const result = processor.postprocess([[message]], filename);
+                const config =
+                {
+                    files:  ['*'],
+                    processor,
+                    rules:  { 'spaced-comment': ['error', 'never', { markers: ['global'] }] },
+                };
+                const result = linter.verify(code, config);
                 assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'foobar');
+                assert.equal(result[0].ruleId, 'spaced-comment');
                 assert(!result[0].fix);
             },
         );

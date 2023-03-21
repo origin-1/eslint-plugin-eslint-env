@@ -72,6 +72,18 @@ describe
             },
         );
 
+        it
+        (
+            'formats an empty global comment',
+            () =>
+            {
+                const code = '/*eslint-env*/';
+                const processor = new EslintEnvProcessor();
+                const [{ text }] = processor.preprocess(code);
+                assert.equal(text, '/* global */');
+            },
+        );
+
         // #region Problem Filtering
 
         it

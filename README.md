@@ -1,6 +1,10 @@
-# eslint-plugin-eslint-env
+# eslint-plugin-eslint-env · [![npm version][npm badge]][npm url]
 
 An ESLint plugin to lint files with [`eslint-env`](https://eslint.org/docs/latest/use/configure/language-options#using-configuration-comments) comments using the flat config.
+
+## Prerequisites
+
+ESLint 8.21 or later is required.
 
 ## Installation
 
@@ -41,3 +45,6 @@ To support pluing-defined environments in `eslint-env` comments (e.g. `/* eslint
       },
   ];
 ```
+
+[npm badge]: https://img.shields.io/npm/v/eslint-plugin-eslint-env.svg?logo=npm
+[npm url]: https://www.npmjs.com/package/eslint-plugin-eslint-env

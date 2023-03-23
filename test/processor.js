@@ -231,6 +231,50 @@ describe
 
         // #endregion
 
+        // #region Justification Preservation
+
+        it
+        (
+            'preserves justifications in single-line eslint-env comments',
+            () =>
+            {
+                const linter = new Linter({ configType: 'flat' });
+                const code = '/* eslint-env node -- TODO: replace eslint-env with global */';
+                const processor = new EslintEnvProcessor();
+                const config =
+                {
+                    files:  ['*'],
+                    processor,
+                    rules:  { 'no-warning-comments': ['error', { location: 'anywhere' }] },
+                };
+                const result = linter.verify(code, config);
+                assert.equal(result.length, 1);
+                assert.equal(result[0].ruleId, 'no-warning-comments');
+            },
+        );
+
+        it
+        (
+            'preserves justifications in multiline eslint-env comments',
+            () =>
+            {
+                const linter = new Linter({ configType: 'flat' });
+                const code = '/* eslint-env node\n-- TODO: replace eslint-env with global */';
+                const processor = new EslintEnvProcessor();
+                const config =
+                {
+                    files:  ['*'],
+                    processor,
+                    rules:  { 'no-warning-comments': ['error', { location: 'anywhere' }] },
+                };
+                const result = linter.verify(code, config);
+                assert.equal(result.length, 1);
+                assert.equal(result[0].ruleId, 'no-warning-comments');
+            },
+        );
+
+        // #endregion
+
         // #region Message Locations
 
         it

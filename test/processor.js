@@ -104,7 +104,7 @@ describe
 
         it
         (
-            'does not report problems in an inserted global comment',
+            'does not report problems in a replaced comment',
             () =>
             {
                 const linter = new Linter({ configType: 'flat' });
@@ -118,13 +118,29 @@ describe
 
         it
         (
-            'does not report problems from disabled rules in processed lines',
+            'does not report problems from disabled rules that overlap with replaced comments',
             () =>
             {
                 const linter = new Linter({ configType: 'flat' });
-                const code = 'foo /* eslint-env node */ ()';
+                const code =
+                unindent
+                `
+                function test()
+                {
+                    /*
+                    eslint-env
+                    node
+                    */
+                }
+                foo /* eslint-env node */ ()
+                `;
                 const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
+                const config =
+                {
+                    files: ['*'],
+                    processor,
+                    rules: { 'max-len': 'error', 'max-lines-per-function': ['error', { max: 10 }] },
+                };
                 const result = linter.verify(code, config);
                 assert.deepEqual(result, []);
             },
@@ -132,7 +148,7 @@ describe
 
         it
         (
-            'reports problems from disabled rules in unprocessed lines',
+            'reports problems from disabled rules that don\'t overlap with replaced comments',
             () =>
             {
                 const linter = new Linter({ configType: 'flat' });

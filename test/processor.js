@@ -104,7 +104,7 @@ describe
 
         it
         (
-            'does not report problems in a replaced comment',
+            'does not report problems in intersection with a replaced comment',
             () =>
             {
                 const linter = new Linter({ configType: 'flat' });
@@ -118,7 +118,8 @@ describe
 
         it
         (
-            'does not report problems from disabled rules that overlap with replaced comments',
+            'does not report problems from rules disabled on overlap that contain replaced ' +
+            'comments',
             () =>
             {
                 const linter = new Linter({ configType: 'flat' });
@@ -148,7 +149,7 @@ describe
 
         it
         (
-            'reports problems from disabled rules that don\'t overlap with replaced comments',
+            'reports problems from rules disabled on overlap that do not contain replaced comments',
             () =>
             {
                 const linter = new Linter({ configType: 'flat' });
@@ -162,8 +163,49 @@ describe
                 const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
                 const result = linter.verify(code, config);
                 assert.equal(result.length, 1);
+                assert.equal(result[0].ruleId, 'max-len');
                 assert.equal(result[0].line, 2);
                 assert.equal(result[0].endLine, 2);
+            },
+        );
+
+        it
+        (
+            'does not report problems from rules disabled anywhere when there is a replaced ' +
+            'comment',
+            () =>
+            {
+                const linter = new Linter({ configType: 'flat' });
+                const code =
+                unindent
+                `
+                /* eslint-env
+                jquery */
+                foo;
+                `;
+                const processor = new EslintEnvProcessor();
+                const config =
+                { files: ['*'], processor, rules: { 'max-lines': ['error', { max: 5 }] } };
+                const result = linter.verify(code, config);
+                assert.deepEqual(result, []);
+            },
+        );
+
+        it
+        (
+            'reports problems from rules disabled anywhere when there is no replaced comment',
+            () =>
+            {
+                const linter = new Linter({ configType: 'flat' });
+                const code = 'foo;\nbar;\nbaz\n;';
+                const processor = new EslintEnvProcessor();
+                const config =
+                { files: ['*'], processor, rules: { 'max-lines': ['error', { max: 1 }] } };
+                const result = linter.verify(code, config);
+                assert.equal(result.length, 1);
+                assert.equal(result[0].ruleId, 'max-lines');
+                assert.equal(result[0].line, 2);
+                assert.equal(result[0].endLine, 4);
             },
         );
 
@@ -286,6 +328,123 @@ describe
                 const result = linter.verify(code, config);
                 assert.equal(result.length, 1);
                 assert.equal(result[0].ruleId, 'no-warning-comments');
+            },
+        );
+
+        // #endregion
+
+        // #region `disabledRules`
+
+        it
+        (
+            'fails if `disabledRules` is null',
+            () =>
+            {
+                assert.throws
+                (
+                    () => new EslintEnvProcessor({ disabledRules: null }),
+                    {
+                        constructor: TypeError,
+                        message:
+                        'disabledRules must be an object or undefined, but null was specified',
+                    },
+                );
+            },
+        );
+
+        it
+        (
+            'fails if `disabledRules` is a function',
+            () =>
+            {
+                const noop = () => { };
+                assert.throws
+                (
+                    () => new EslintEnvProcessor({ disabledRules: noop }),
+                    {
+                        constructor: TypeError,
+                        message:
+                        'disabledRules must be an object or undefined, but [Function: noop] was ' +
+                        'specified',
+                    },
+                );
+            },
+        );
+
+        it
+        (
+            'fails if `disabledRules` is a primitive',
+            () =>
+            {
+                assert.throws
+                (
+                    () => new EslintEnvProcessor({ disabledRules: Symbol() }),
+                    {
+                        constructor: TypeError,
+                        message:
+                        'disabledRules must be an object or undefined, but Symbol() was specified',
+                    },
+                );
+            },
+        );
+
+        it
+        (
+            'fails if a `disabledRules` value is invalid',
+            () =>
+            {
+                assert.throws
+                (
+                    () => new EslintEnvProcessor({ disabledRules: { foo: 'bar' } }),
+                    {
+                        constructor: TypeError,
+                        message:
+                        'Valid settings for disabledRules values are \'intersection\', ' +
+                        '\'overlap\', \'always\' or undefined, but \'bar\' was specified for ' +
+                        'rule \'foo\'',
+                    },
+                );
+            },
+        );
+
+        it
+        (
+            '`disabledRules` settings can be overridden',
+            () =>
+            {
+                const linter = new Linter({ configType: 'flat' });
+                const code = '/* eslint-env node */\n;';
+                const processor =
+                new EslintEnvProcessor
+                ({ disabledRules: { 'max-len': 'intersection', 'no-extra-semi': 'anywhere' } });
+                const config =
+                {
+                    files: ['*'],
+                    processor,
+                    rules: { 'max-len': 'error', 'no-extra-semi': 'error' },
+                };
+                const result = linter.verify(code, config);
+                assert.equal(result.length, 1);
+                assert.equal(result[0].ruleId, 'max-len');
+                assert.equal(result[0].line, 1);
+                assert.equal(result[0].column, 1);
+                assert.equal(result[0].endLine, 1);
+                assert.equal(result[0].endColumn, 22);
+            },
+        );
+
+        it
+        (
+            '`disabledRules` settings are not overridden by undefined values',
+            () =>
+            {
+                const linter = new Linter({ configType: 'flat' });
+                const code = '/* eslint-env node */';
+                const processor =
+                new EslintEnvProcessor({ disabledRules: { 'max-len': undefined } });
+                const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
+                const result = linter.verify(code, config);
+                assert.deepEqual(result, []);
             },
         );
 

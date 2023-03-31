@@ -27,25 +27,27 @@ function unindent(strings, ...values)
     return lines.map(line => line.slice(minLineIndent)).join('\n');
 }
 
+function verifyAndFixWithProcessor(code, config, processorOptions)
+{
+    const linter = new Linter({ configType: 'flat' });
+    const processor = new EslintEnvProcessor(processorOptions);
+    const report = linter.verifyAndFix(code, { files: ['*'], processor, ...config });
+    return report;
+}
+
+function verifyWithProcessor(code, config, processorOptions)
+{
+    const linter = new Linter({ configType: 'flat' });
+    const processor = new EslintEnvProcessor(processorOptions);
+    const lintMessages = linter.verify(code, { files: ['*'], processor, ...config });
+    return lintMessages;
+}
+
 describe
 (
     'eslint-env processor',
     () =>
     {
-        it
-        (
-            'inserts a global comment',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code = '/* eslint-env mocha */ it';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-undef': 'error' } };
-                const result = linter.verify(code, config);
-                assert.deepEqual(result, []);
-            },
-        );
-
         // #region Comment Formatting
 
         it
@@ -100,133 +102,6 @@ describe
 
         // #endregion
 
-        // #region Problem Filtering
-
-        it
-        (
-            'does not report problems in intersection with a replaced comment',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code = '/* eslint-env node */';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-unused-vars': 'error' } };
-                const result = linter.verify(code, config);
-                assert.deepEqual(result, []);
-            },
-        );
-
-        it
-        (
-            'does not report problems from rules disabled on overlap that contain replaced ' +
-            'comments',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code =
-                unindent
-                `
-                function test()
-                {
-                    /*
-                    eslint-env
-                    node
-                    */
-                }
-                foo /* eslint-env node */ ()
-                `;
-                const processor = new EslintEnvProcessor();
-                const config =
-                {
-                    files: ['*'],
-                    processor,
-                    rules: { 'max-len': 'error', 'max-lines-per-function': ['error', { max: 10 }] },
-                };
-                const result = linter.verify(code, config);
-                assert.deepEqual(result, []);
-            },
-        );
-
-        it
-        (
-            'reports problems from rules disabled on overlap that do not contain replaced comments',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code =
-                unindent
-                `
-                foo /* eslint-env node */ ()
-                ${'/'.repeat(100)}
-                `;
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'max-len');
-                assert.equal(result[0].line, 2);
-                assert.equal(result[0].endLine, 2);
-            },
-        );
-
-        it
-        (
-            'does not report problems from rules disabled anywhere when there is a replaced ' +
-            'comment',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code =
-                unindent
-                `
-                /* eslint-env
-                jquery */
-                foo;
-                `;
-                const processor = new EslintEnvProcessor();
-                const config =
-                { files: ['*'], processor, rules: { 'max-lines': ['error', { max: 5 }] } };
-                const result = linter.verify(code, config);
-                assert.deepEqual(result, []);
-            },
-        );
-
-        it
-        (
-            'reports problems from rules disabled anywhere when there is no replaced comment',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code = 'foo;\nbar;\nbaz\n;';
-                const processor = new EslintEnvProcessor();
-                const config =
-                { files: ['*'], processor, rules: { 'max-lines': ['error', { max: 1 }] } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'max-lines');
-                assert.equal(result[0].line, 2);
-                assert.equal(result[0].endLine, 4);
-            },
-        );
-
-        // #endregion
-
-        it
-        (
-            'handles plugins with or without custom environments',
-            () =>
-            {
-                const linter = new Linter({ configType: 'flat' });
-                const code = '/* eslint-env cypress/globals */ cy';
-                const processor =
-                new EslintEnvProcessor
-                ({ plugins: { 'cypress': require('eslint-plugin-cypress'), 'foobar': { } } });
-                const config = { files: ['*'], processor, rules: { 'no-undef': 'error' } };
-                const result = linter.verify(code, config);
-                assert.deepEqual(result, []);
-            },
-        );
-
         // #region Single-line and Multiline Preservation
 
         it
@@ -234,7 +109,6 @@ describe
             'keeps comments single-lined',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code =
                 unindent
                 `
@@ -243,12 +117,10 @@ describe
                     bar(); /* eslint-env */ baz();
                 }
                 `;
-                const processor = new EslintEnvProcessor();
-                const config =
-                { files: ['*'], processor, rules: { 'max-statements-per-line': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'max-statements-per-line');
+                const config = { rules: { 'max-statements-per-line': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-statements-per-line');
             },
         );
 
@@ -257,7 +129,6 @@ describe
             'keeps comments multi-lined',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code =
                 unindent
                 `
@@ -267,11 +138,10 @@ describe
                     browser */ document;
                 }
                 `;
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-unreachable': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'no-unreachable');
+                const config = { rules: { 'no-unreachable': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'no-unreachable');
             },
         );
 
@@ -296,18 +166,12 @@ describe
             'preserves justifications in single-line eslint-env comments',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env node -- TODO: replace eslint-env with global */';
-                const processor = new EslintEnvProcessor();
                 const config =
-                {
-                    files:  ['*'],
-                    processor,
-                    rules:  { 'no-warning-comments': ['error', { location: 'anywhere' }] },
-                };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'no-warning-comments');
+                { rules: { 'no-warning-comments': ['error', { location: 'anywhere' }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'no-warning-comments');
             },
         );
 
@@ -316,18 +180,12 @@ describe
             'preserves justifications in multiline eslint-env comments',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env node\n-- TODO: replace eslint-env with global */';
-                const processor = new EslintEnvProcessor();
                 const config =
-                {
-                    files:  ['*'],
-                    processor,
-                    rules:  { 'no-warning-comments': ['error', { location: 'anywhere' }] },
-                };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'no-warning-comments');
+                { rules: { 'no-warning-comments': ['error', { location: 'anywhere' }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'no-warning-comments');
             },
         );
 
@@ -412,24 +270,17 @@ describe
             '`disabledRules` settings can be overridden',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env node */\n;';
-                const processor =
-                new EslintEnvProcessor
-                ({ disabledRules: { 'max-len': 'intersection', 'no-extra-semi': 'anywhere' } });
-                const config =
-                {
-                    files: ['*'],
-                    processor,
-                    rules: { 'max-len': 'error', 'no-extra-semi': 'error' },
-                };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'max-len');
-                assert.equal(result[0].line, 1);
-                assert.equal(result[0].column, 1);
-                assert.equal(result[0].endLine, 1);
-                assert.equal(result[0].endColumn, 22);
+                const config = { rules: { 'max-len': 'error', 'no-extra-semi': 'error' } };
+                const processorOptions =
+                { disabledRules: { 'max-len': 'intersection', 'no-extra-semi': 'anywhere' } };
+                const lintMessages = verifyWithProcessor(code, config, processorOptions);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-len');
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].column, 1);
+                assert.equal(lintMessages[0].endLine, 1);
+                assert.equal(lintMessages[0].endColumn, 22);
             },
         );
 
@@ -438,13 +289,124 @@ describe
             '`disabledRules` settings are not overridden by undefined values',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env node */';
-                const processor =
-                new EslintEnvProcessor({ disabledRules: { 'max-len': undefined } });
-                const config = { files: ['*'], processor, rules: { 'max-len': 'error' } };
-                const result = linter.verify(code, config);
-                assert.deepEqual(result, []);
+                const config = { rules: { 'max-len': 'error' } };
+                const processorOptions = { disabledRules: { 'max-len': undefined } };
+                const lintMessages = verifyWithProcessor(code, config, processorOptions);
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        // #endregion
+
+        // #region `plugins`
+
+        it
+        (
+            'handles plugins with or without custom environments',
+            () =>
+            {
+                const code = '/* eslint-env cypress/globals */ cy';
+                const config = { rules: { 'no-undef': 'error' } };
+                const processorOptions =
+                { plugins: { 'cypress': require('eslint-plugin-cypress'), 'foobar': { } } };
+                const lintMessages = verifyWithProcessor(code, config, processorOptions);
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        // #endregion
+
+        // #region Problem Filtering
+
+        it
+        (
+            'does not report problems in intersection with a replaced comment',
+            () =>
+            {
+                const code = '/* eslint-env node */';
+                const config = { rules: { 'no-unused-vars': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        it
+        (
+            'does not report problems from rules disabled on overlap that contain replaced ' +
+            'comments',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                function test()
+                {
+                    /*
+                    eslint-env
+                    node
+                    */
+                }
+                foo /* eslint-env node */ ()
+                `;
+                const config =
+                { rules: { 'max-len': 'error', 'max-lines-per-function': ['error', { max: 10 }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        it
+        (
+            'reports problems from rules disabled on overlap that do not contain replaced comments',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                foo /* eslint-env node */ ()
+                ${'/'.repeat(100)}
+                `;
+                const config = { rules: { 'max-len': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-len');
+                assert.equal(lintMessages[0].line, 2);
+                assert.equal(lintMessages[0].endLine, 2);
+            },
+        );
+
+        it
+        (
+            'does not report problems from rules disabled anywhere when there is a replaced ' +
+            'comment',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                /* eslint-env
+                jquery */
+                foo;
+                `;
+                const config = { rules: { 'max-lines': ['error', { max: 5 }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        it
+        (
+            'reports problems from rules disabled anywhere when there is no replaced comment',
+            () =>
+            {
+                const code = 'foo;\nbar;\nbaz\n;';
+                const config = { rules: { 'max-lines': ['error', { max: 1 }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-lines');
+                assert.equal(lintMessages[0].line, 2);
+                assert.equal(lintMessages[0].endLine, 4);
             },
         );
 
@@ -457,16 +419,14 @@ describe
             'adjusts message locations when there is no eslint-env comment in the line',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env\nmocha */ it\n foo';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-undef': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].line, 3);
-                assert.equal(result[0].column, 2);
-                assert.equal(result[0].endLine, 3);
-                assert.equal(result[0].endColumn, 5);
+                const config = { rules: { 'no-undef': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].line, 3);
+                assert.equal(lintMessages[0].column, 2);
+                assert.equal(lintMessages[0].endLine, 3);
+                assert.equal(lintMessages[0].endColumn, 5);
             },
         );
 
@@ -475,16 +435,14 @@ describe
             'adjusts message locations when an eslint-env comment starts in the middle of a line',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = 'foo; /* eslint-env mocha */';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-undef': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].line, 1);
-                assert.equal(result[0].column, 1);
-                assert.equal(result[0].endLine, 1);
-                assert.equal(result[0].endColumn, 4);
+                const config = { rules: { 'no-undef': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].column, 1);
+                assert.equal(lintMessages[0].endLine, 1);
+                assert.equal(lintMessages[0].endColumn, 4);
             },
         );
 
@@ -493,16 +451,14 @@ describe
             'adjusts message locations when an eslint-env comment ends in the middle of a line',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env mocha */ foo;';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-undef': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].line, 1);
-                assert.equal(result[0].column, 24);
-                assert.equal(result[0].endLine, 1);
-                assert.equal(result[0].endColumn, 27);
+                const config = { rules: { 'no-undef': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].column, 24);
+                assert.equal(lintMessages[0].endLine, 1);
+                assert.equal(lintMessages[0].endColumn, 27);
             },
         );
 
@@ -511,7 +467,6 @@ describe
             'adjusts message locations with multiple eslint-env comments',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code =
                 unindent
                 `
@@ -522,18 +477,17 @@ describe
                 */
                 foo; /* eslint-env mocha */ bar;
                 `;
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'no-undef': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 2);
-                assert.equal(result[0].line, 6);
-                assert.equal(result[0].column, 1);
-                assert.equal(result[0].endLine, 6);
-                assert.equal(result[0].endColumn, 4);
-                assert.equal(result[1].line, 6);
-                assert.equal(result[1].column, 29);
-                assert.equal(result[1].endLine, 6);
-                assert.equal(result[1].endColumn, 32);
+                const config = { rules: { 'no-undef': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 2);
+                assert.equal(lintMessages[0].line, 6);
+                assert.equal(lintMessages[0].column, 1);
+                assert.equal(lintMessages[0].endLine, 6);
+                assert.equal(lintMessages[0].endColumn, 4);
+                assert.equal(lintMessages[1].line, 6);
+                assert.equal(lintMessages[1].column, 29);
+                assert.equal(lintMessages[1].endLine, 6);
+                assert.equal(lintMessages[1].endColumn, 32);
             },
         );
 
@@ -546,11 +500,9 @@ describe
             'adjusts autofix locations',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/* eslint-env jquery */ _ => _';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'arrow-parens': 'error' } };
-                const report = linter.verifyAndFix(code, config);
+                const config = { rules: { 'arrow-parens': 'error' } };
+                const report = verifyAndFixWithProcessor(code, config);
                 assert.equal(report.fixed, true);
                 assert.equal(report.output, '/* eslint-env jquery */ (_) => _');
             },
@@ -561,14 +513,12 @@ describe
             'suppresses autofixes that overlap with whole eslint-env comments',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = 'let foo = () => {return void /* eslint-env jquery */ 0};';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'arrow-body-style': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'arrow-body-style');
-                assert(!result[0].fix);
+                const config = { rules: { 'arrow-body-style': 'error' } };
+                const report = verifyAndFixWithProcessor(code, config);
+                assert.equal(report.fixed, false);
+                assert.equal(report.messages.length, 1);
+                assert.equal(report.messages[0].ruleId, 'arrow-body-style');
             },
         );
 
@@ -577,19 +527,13 @@ describe
             'suppresses autofixes that overlap with part of an eslint-env comment',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = '/*eslint-env amd*/';
-                const processor = new EslintEnvProcessor();
                 const config =
-                {
-                    files:  ['*'],
-                    processor,
-                    rules:  { 'spaced-comment': ['error', 'never', { markers: ['global'] }] },
-                };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'spaced-comment');
-                assert(!result[0].fix);
+                { rules: { 'spaced-comment': ['error', 'never', { markers: ['global'] }] } };
+                const report = verifyAndFixWithProcessor(code, config);
+                assert.equal(report.fixed, false);
+                assert.equal(report.messages.length, 1);
+                assert.equal(report.messages[0].ruleId, 'spaced-comment');
             },
         );
 
@@ -598,14 +542,12 @@ describe
             'does not suppress autofixes that don\'t overlap with eslint-env comments',
             () =>
             {
-                const linter = new Linter({ configType: 'flat' });
                 const code = 'let foo = () => {return void 0}; /* eslint-env jquery */';
-                const processor = new EslintEnvProcessor();
-                const config = { files: ['*'], processor, rules: { 'arrow-body-style': 'error' } };
-                const result = linter.verify(code, config);
-                assert.equal(result.length, 1);
-                assert.equal(result[0].ruleId, 'arrow-body-style');
-                assert(result[0].fix);
+                const config = { rules: { 'arrow-body-style': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'arrow-body-style');
+                assert(lintMessages[0].fix);
             },
         );
 

@@ -303,6 +303,19 @@ describe
 
         it
         (
+            'fails if `plugins` is invalid',
+            () =>
+            {
+                assert.throws
+                (
+                    () => new EslintEnvProcessor({ plugins: null }),
+                    { constructor: TypeError, message: 'Key "plugins": Expected an object.' },
+                );
+            },
+        );
+
+        it
+        (
             'handles plugins with or without custom environments',
             () =>
             {

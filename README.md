@@ -46,5 +46,5 @@ To support pluing-defined environments in `eslint-env` comments (e.g. `/* eslint
   ];
 ```
 
-[npm badge]: https://img.shields.io/npm/v/eslint-plugin-eslint-env.svg?logo=npm
+[npm badge]: https://img.shields.io/npm/v/eslint-plugin-eslint-env?logo=npm
 [npm url]: https://www.npmjs.com/package/eslint-plugin-eslint-env

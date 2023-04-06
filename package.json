@@ -24,6 +24,7 @@
     "mocha": "9"
   },
   "peerDependencies": {
+    "@types/eslint": ">=8",
     "eslint": ">=8.21"
   },
   "engines": {

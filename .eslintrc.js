@@ -15,6 +15,11 @@ createConfig
         parserOptions:  { sourceType: 'module' },
     },
     {
+        files:          ['*.ts'],
+        parserOptions:  { project: 'tsconfig.json' },
+        tsVersion:      'latest',
+    },
+    {
         files:  ['*'],
         env:    { 'node': true },
     },

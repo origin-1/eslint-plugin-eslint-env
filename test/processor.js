@@ -258,8 +258,8 @@ describe
                         constructor: TypeError,
                         message:
                         'Valid settings for disabledRules values are \'intersection\', ' +
-                        '\'overlap\', \'always\' or undefined, but \'bar\' was specified for ' +
-                        'rule \'foo\'',
+                        '\'overlap\', \'anywhere\', \'anywhere-multiline\' or undefined, but ' +
+                        '\'bar\' was specified for rule \'foo\'',
                     },
                 );
             },
@@ -346,8 +346,8 @@ describe
 
         it
         (
-            'does not report problems from rules disabled on overlap that contain replaced ' +
-            'comments',
+            'does not report problems from rules with disabled state "overlap" that contain ' +
+            'replaced comments',
             () =>
             {
                 const code =
@@ -371,7 +371,8 @@ describe
 
         it
         (
-            'reports problems from rules disabled on overlap that do not contain replaced comments',
+            'reports problems from rules with disabled state "overlap" that do not contain ' +
+            'replaced comments',
             () =>
             {
                 const code =
@@ -391,8 +392,45 @@ describe
 
         it
         (
-            'does not report problems from rules disabled anywhere when there is a replaced ' +
-            'comment',
+            'does not report problems from rules with disabled state "anywhere" when there is a ' +
+            'replaced comment',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                /* eslint-env
+                jquery */
+                foo;
+                `;
+                const config = { rules: { 'max-lines': ['error', { max: 5 }] } };
+                const lintMessages =
+                verifyWithProcessor(code, config, { disabledRules: { 'max-lines': 'anywhere' } });
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        it
+        (
+            'reports problems from rules with disabled state "anywhere" when there is no ' +
+            'replaced comment',
+            () =>
+            {
+                const code = 'foo;\nbar;\nbaz\n;';
+                const config = { rules: { 'max-lines': ['error', { max: 1 }] } };
+                const lintMessages =
+                verifyWithProcessor(code, config, { disabledRules: { 'max-lines': 'anywhere' } });
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-lines');
+                assert.equal(lintMessages[0].line, 2);
+                assert.equal(lintMessages[0].endLine, 4);
+            },
+        );
+
+        it
+        (
+            'does not report problems from rules with disabled state "anywhere-multiline" when ' +
+            'there is a replaced multiline comment',
             () =>
             {
                 const code =
@@ -410,16 +448,17 @@ describe
 
         it
         (
-            'reports problems from rules disabled anywhere when there is no replaced comment',
+            'reports problems from rules with disabled state "anywhere-multiline" when there is ' +
+            'no replaced multiline comment',
             () =>
             {
-                const code = 'foo;\nbar;\nbaz\n;';
-                const config = { rules: { 'max-lines': ['error', { max: 1 }] } };
+                const code = '/* eslint-env jquery */\nfoo;\nbar;\nbaz\n;';
+                const config = { rules: { 'max-lines': ['error', { max: 2 }] } };
                 const lintMessages = verifyWithProcessor(code, config);
                 assert.equal(lintMessages.length, 1);
                 assert.equal(lintMessages[0].ruleId, 'max-lines');
-                assert.equal(lintMessages[0].line, 2);
-                assert.equal(lintMessages[0].endLine, 4);
+                assert.equal(lintMessages[0].line, 3);
+                assert.equal(lintMessages[0].endLine, 5);
             },
         );
 

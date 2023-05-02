@@ -258,8 +258,9 @@ describe
                         constructor: TypeError,
                         message:
                         'Valid settings for disabledRules values are \'intersection\', ' +
-                        '\'overlap\', \'anywhere\', \'anywhere-multiline\' or undefined, but ' +
-                        '\'bar\' was specified for rule \'foo\'',
+                        '\'overlap\', \'overlap-multiline\', \'anywhere\', ' +
+                        '\'anywhere-multiline\' or undefined, but \'bar\' was specified for rule ' +
+                        '\'foo\'',
                     },
                 );
             },
@@ -350,20 +351,8 @@ describe
             'replaced comments',
             () =>
             {
-                const code =
-                unindent
-                `
-                function test()
-                {
-                    /*
-                    eslint-env
-                    node
-                    */
-                }
-                foo /* eslint-env node */ ()
-                `;
-                const config =
-                { rules: { 'max-len': 'error', 'max-lines-per-function': ['error', { max: 10 }] } };
+                const code = 'foo /* eslint-env node */ ()';
+                const config = { rules: { 'max-len': 'error' } };
                 const lintMessages = verifyWithProcessor(code, config);
                 assert.deepEqual(lintMessages, []);
             },
@@ -392,6 +381,105 @@ describe
 
         it
         (
+            'reports problems from rules with disabled state "overlap" that bound replaced ' +
+            'comments',
+            () =>
+            {
+                const code = '/* eslint-env es6 */foo/* eslint-env node */';
+                const config = { rules: { 'id-denylist': ['error', 'foo'] } };
+                const processorOptions = { disabledRules: { 'id-denylist': 'overlap' } };
+                const lintMessages = verifyWithProcessor(code, config, processorOptions);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'id-denylist');
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].column, 21);
+                assert.equal(lintMessages[0].endLine, 1);
+                assert.equal(lintMessages[0].endColumn, 24);
+            },
+        );
+
+        it
+        (
+            'does not report problems from rules with disabled state "overlap-multiline" that ' +
+            'contain replaced multiline comments',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                function test()
+                {
+                    /*
+                    eslint-env
+                    node
+                    */
+                }
+                `;
+                const config = { rules: { 'max-lines-per-function': ['error', { max: 10 }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.deepEqual(lintMessages, []);
+            },
+        );
+
+        it
+        (
+            'reports problems from rules with disabled state "overlap-multiline" that do not ' +
+            'contain replaced multiline comments',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                function test()
+                {
+                    /* eslint-env node */
+                    foo();
+                    bar();
+                    baz();
+                }
+                `;
+                const config = { rules: { 'max-lines-per-function': ['error', { max: 3 }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-lines-per-function');
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].endLine, 7);
+            },
+        );
+
+        it
+        (
+            'reports problems from rules with disabled state "overlap-multiline" that bound ' +
+            'replaced multiline comments',
+            () =>
+            {
+                const code =
+                unindent
+                `
+                /*
+                eslint-env es6
+                */function test()
+                {
+                    foo();
+                    bar();
+                    baz();
+                }/*
+                eslint-env node
+                */
+                `;
+                const config = { rules: { 'max-lines-per-function': ['error', { max: 3 }] } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'max-lines-per-function');
+                assert.equal(lintMessages[0].line, 3);
+                assert.equal(lintMessages[0].column, 3);
+                assert.equal(lintMessages[0].endLine, 8);
+                assert.equal(lintMessages[0].endColumn, 2);
+            },
+        );
+
+        it
+        (
             'does not report problems from rules with disabled state "anywhere" when there is a ' +
             'replaced comment',
             () =>
@@ -404,8 +492,8 @@ describe
                 foo;
                 `;
                 const config = { rules: { 'max-lines': ['error', { max: 5 }] } };
-                const lintMessages =
-                verifyWithProcessor(code, config, { disabledRules: { 'max-lines': 'anywhere' } });
+                const processorOptions = { disabledRules: { 'max-lines': 'anywhere' } };
+                const lintMessages = verifyWithProcessor(code, config, processorOptions);
                 assert.deepEqual(lintMessages, []);
             },
         );
@@ -418,8 +506,8 @@ describe
             {
                 const code = 'foo;\nbar;\nbaz\n;';
                 const config = { rules: { 'max-lines': ['error', { max: 1 }] } };
-                const lintMessages =
-                verifyWithProcessor(code, config, { disabledRules: { 'max-lines': 'anywhere' } });
+                const processorOptions = { disabledRules: { 'max-lines': 'anywhere' } };
+                const lintMessages = verifyWithProcessor(code, config, processorOptions);
                 assert.equal(lintMessages.length, 1);
                 assert.equal(lintMessages[0].ruleId, 'max-lines');
                 assert.equal(lintMessages[0].line, 2);

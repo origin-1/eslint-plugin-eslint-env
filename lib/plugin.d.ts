@@ -12,12 +12,14 @@ import type { ESLint, Linter } from 'eslint';
  * * `"overlap"` suppresses problems that overlap with replaced `eslint-env` comments in any way,
  * not only by intersection.
  * This value also suppresses problems that span over a whole `eslint-env` comment.
+ * * `"overlap-multiline"` is similar to `"overlap"`, but it only suppresses problems that overlap
+ * with replaced multiline `eslint-env` comments.
  * * `"anywhere"` suppresses all problems in a file that contains one or more `eslint-env` comments.
  * * `"anywhere-multiline"` suppresses all problems in a file that contains one or more multiline
  * `eslint-env` comments.
  */
 export type DisabledRuleState =
-'intersection' | 'overlap' | 'anywhere' | 'anywhere-multiline' | undefined;
+'intersection' | 'overlap' | 'overlap-multiline' | 'anywhere' | 'anywhere-multiline' | undefined;
 
 /**
  * An [ESLint processor](

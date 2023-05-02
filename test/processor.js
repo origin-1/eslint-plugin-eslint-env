@@ -556,6 +556,22 @@ describe
 
         it
         (
+            'adjusts message locations when there is a BOM',
+            () =>
+            {
+                const code = '\ufeffdebugger/* eslint-env */';
+                const config = { rules: { 'no-debugger': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].column, 1);
+                assert.equal(lintMessages[0].endLine, 1);
+                assert.equal(lintMessages[0].endColumn, 9);
+            },
+        );
+
+        it
+        (
             'adjusts message locations when there is no eslint-env comment in the line',
             () =>
             {
@@ -637,14 +653,14 @@ describe
 
         it
         (
-            'adjusts autofix locations',
+            'adjusts autofix locations when there is a BOM',
             () =>
             {
-                const code = '/* eslint-env jquery */ _ => _';
+                const code = '\ufeff/* eslint-env jquery */ _ => _';
                 const config = { rules: { 'arrow-parens': 'error' } };
                 const report = verifyAndFixWithProcessor(code, config);
                 assert.equal(report.fixed, true);
-                assert.equal(report.output, '/* eslint-env jquery */ (_) => _');
+                assert.equal(report.output, '\ufeff/* eslint-env jquery */ (_) => _');
             },
         );
 

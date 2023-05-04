@@ -22,13 +22,13 @@ In your `eslint.config.js` file, create a new `EslintEnvProcessor` and add it to
   export default
   [
       {
-          files:      ['*.js'],
+          files:      ['**/*.js'],
 +         processor:  new EslintEnvProcessor(),
       },
   ];
 ```
 
-To support pluing-defined environments in `eslint-env` comments (e.g. `/* eslint-env cypress/globals */`, `/* eslint-env react-native/react-native */`, etc.), add a `plugins` setting both to the configuration and to the `EslintEnvProcessor` constructor options.
+To support plugin-defined environments in `eslint-env` comments (e.g. `/* eslint-env cypress/globals */`, `/* eslint-env react-native/react-native */`, etc.), add a `plugins` setting both to the configuration and to the `EslintEnvProcessor` constructor options.
 
 ```diff
   import { EslintEnvProcessor } from 'eslint-plugin-eslint-env';
@@ -39,7 +39,7 @@ To support pluing-defined environments in `eslint-env` comments (e.g. `/* eslint
   export default
   [
       {
-          files:      ['*.js'],
+          files:      ['**/*.js'],
 +         plugins,
 +         processor:  new EslintEnvProcessor({ plugins }),
       },

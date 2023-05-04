@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-eslint-env",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "ISC",
   "author": "Francesco Trotta <ft@fasttime.org> (https://github.com/fasttime)",
   "files": [

@@ -14,7 +14,7 @@
     "clean": "node dev/clean.mjs",
     "coverage": "node dev/coverage.mjs",
     "lint": "eslint . --format compact --ignore-path .gitignore",
-    "release": "npm version -m 'Version %s'",
+    "release": "npm version -m \"Version %s\"",
     "test": "mocha --check-leaks"
   },
   "devDependencies": {

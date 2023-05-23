@@ -13,7 +13,7 @@
     "build-no-install": "npm run clean && npm run lint && npm run coverage",
     "clean": "node dev/clean.mjs",
     "coverage": "node dev/coverage.mjs",
-    "lint": "eslint . --format compact --ignore-path .gitignore",
+    "lint": "eslint . --format compact",
     "release": "npm version -m \"Version %s\"",
     "test": "mocha --check-leaks"
   },
@@ -22,6 +22,7 @@
     "c8js": "latest",
     "eslint": "latest",
     "eslint-plugin-cypress": "latest",
+    "globals": "latest",
     "mocha": "9"
   },
   "peerDependencies": {

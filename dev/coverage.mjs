@@ -9,6 +9,7 @@ await c8js
     mochaPath,
     ['--check-leaks'],
     {
+        cwd:            new URL('..', import.meta.url),
         reporter:       ['html', 'text-summary'],
         useC8Config:    false,
         watermarks:

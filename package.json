@@ -1,6 +1,12 @@
 {
   "name": "eslint-plugin-eslint-env",
   "version": "0.3.1",
+  "description": "An ESLint plugin to lint files with eslint-envcomments using the flat config.",
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "eslintplugin"
+  ],
   "license": "ISC",
   "author": "Francesco Trotta <ft@fasttime.org> (https://github.com/fasttime)",
   "files": [

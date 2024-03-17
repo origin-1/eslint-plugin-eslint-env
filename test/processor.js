@@ -1,8 +1,8 @@
 'use strict';
 
+const EslintEnvProcessor    = require('../lib/processor');
 const { strict: assert }    = require('assert');
 const { Linter }            = require('eslint');
-const EslintEnvProcessor    = require('../lib/processor');
 
 function unindent(strings, ...values)
 {
@@ -644,6 +644,22 @@ describe
                 assert.equal(lintMessages[1].column, 29);
                 assert.equal(lintMessages[1].endLine, 6);
                 assert.equal(lintMessages[1].endColumn, 32);
+            },
+        );
+
+        it
+        (
+            'adjusts message locations without endLine or endColumn',
+            () =>
+            {
+                const code = '? /* eslint-env node */';
+                const config = { };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].line, 1);
+                assert.equal(lintMessages[0].column, 1);
+                assert(!('endLine' in lintMessages[0]));
+                assert(!('endColumn' in lintMessages[0]));
             },
         );
 

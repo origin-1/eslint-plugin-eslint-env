@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { createRequire } from   'node:module';
-import c8js from                'c8js';
+import { fileURLToPath }    from 'node:url';
+import c8js                 from 'c8js';
 
-const mochaPath = createRequire(import.meta.url).resolve('mocha/bin/mocha');
+const mochaPath = fileURLToPath(import.meta.resolve('mocha/bin/mocha'));
 await c8js
 (
     mochaPath,

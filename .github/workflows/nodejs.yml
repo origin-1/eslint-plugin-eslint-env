@@ -1,6 +1,11 @@
 name: Node.js CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: '**'
+    tags-ignore: '**'
+  pull_request:
+    branches: '**'
 
 jobs:
 
@@ -14,10 +19,30 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: ^20.8
+        node-version: '22'
     - run: |
         npm install
         npm run lint
+
+  test-eslint-8:
+
+    name: test (Node.js ${{ matrix.node-version }})
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ['12.22.0', '12', '14', '16']
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: |
+        npm install
+        npm install eslint@8 eslint-plugin-cypress@2
+        npm test
 
   test:
 
@@ -27,7 +52,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ['12.22.0', '12', '14.17.0', '14', '16.0.0', '16', '18', '20', '21']
+        node-version: ['18.18.0', '18', '20', '21', '22']
 
     steps:
     - uses: actions/checkout@v4

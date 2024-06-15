@@ -27,6 +27,7 @@
     "@origin-1/eslint-config": "latest",
     "c8js": "latest",
     "eslint": "latest",
+    "eslint-formatter-compact": "latest",
     "eslint-plugin-cypress": "latest",
     "globals": "latest",
     "mocha": "9"

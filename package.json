@@ -20,7 +20,7 @@
     "clean": "node dev/clean.mjs",
     "coverage": "node dev/coverage.mjs",
     "lint": "eslint . --format compact",
-    "release": "npm version -m \"Version %s\"",
+    "release": "npm version -m \"release %s\"",
     "test": "mocha --check-leaks"
   },
   "devDependencies": {

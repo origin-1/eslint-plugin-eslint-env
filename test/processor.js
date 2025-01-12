@@ -724,5 +724,39 @@ describe
         );
 
         // #endregion
+
+        // #region Suggestions
+
+        it
+        (
+            'adjusts suggestion locations',
+            () =>
+            {
+                const code = '/* eslint-env jquery */ !a in b';
+                const config = { rules: { 'no-unsafe-negation': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'no-unsafe-negation');
+                assert.equal(lintMessages[0].suggestions.length, 2);
+                assert.deepEqual(lintMessages[0].suggestions[0].fix.range, [25, 31]);
+                assert.deepEqual(lintMessages[0].suggestions[1].fix.range, [24, 26]);
+            },
+        );
+
+        it
+        (
+            'suppresses suggestions',
+            () =>
+            {
+                const code = 'foo /* eslint-env jquery */ .isPrototypeOf(bar);';
+                const config = { rules: { 'no-prototype-builtins': 'error' } };
+                const lintMessages = verifyWithProcessor(code, config);
+                assert.equal(lintMessages.length, 1);
+                assert.equal(lintMessages[0].ruleId, 'no-prototype-builtins');
+                assert.equal(lintMessages[0].suggestions, undefined);
+            },
+        );
+
+        // #endregion
     },
 );

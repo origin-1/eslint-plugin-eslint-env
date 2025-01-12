@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-eslint-env",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "An ESLint plugin to lint files with eslint-envcomments using the flat config.",
   "keywords": [
     "eslint",

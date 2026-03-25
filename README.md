@@ -1,6 +1,6 @@
 # eslint-plugin-eslint-env · [![npm version][npm badge]][npm url]
 
-An ESLint plugin to lint files with [`eslint-env`](https://eslint.org/docs/latest/use/configure/language-options#using-configuration-comments) comments using the flat config.
+An ESLint plugin to lint files with [`eslint-env`](https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-comments) comments using the flat config.
 
 ## Prerequisites
 

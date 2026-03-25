@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
-        node-version: '22'
+        node-version: '24'
     - run: |
         npm install
         npm run lint
@@ -32,11 +32,31 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ['12.22.0', '12', '14', '16']
+        node-version: ['12.22.0', latest]
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: |
+        npm install
+        npm install eslint@8 eslint-plugin-cypress@2
+        npm test
+
+  test-eslint-9:
+
+    name: test (Node.js ${{ matrix.node-version }})
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ['18.18.0', latest]
+
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
     - run: |
@@ -52,11 +72,11 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ['18.18.0', '18', '20', '22', '23']
+        node-version: ['20.19.0', '20', '22', '24', latest]
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
     - run: |

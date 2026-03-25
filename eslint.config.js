@@ -2,10 +2,10 @@
 
 async function makeConfig()
 {
-    const [{ createFlatConfig }, { default: globals }] =
+    const [{ createConfig }, { default: globals }] =
     await Promise.all([import('@origin-1/eslint-config'), import('globals')]);
     const config =
-    await createFlatConfig
+    await createConfig
     (
         {
             ignores: ['coverage'],
@@ -20,9 +20,8 @@ async function makeConfig()
             jsVersion:  2022,
         },
         {
-            files:              ['**/*.ts'],
-            languageOptions:    { parserOptions: { project: 'tsconfig.json' } },
-            tsVersion:          'latest',
+            files:      ['**/*.ts'],
+            tsVersion:  'latest',
         },
         {
             files:              ['**/*'],
@@ -31,6 +30,17 @@ async function makeConfig()
         {
             files:              ['test/**'],
             languageOptions:    { globals: { ...globals.mocha } },
+        },
+        {
+            files:              ['package.json'],
+            jsonVersion:        'standard',
+            language:           'json/json',
+        },
+        {
+            files:              ['tsconfig.json'],
+            jsonVersion:        'standard',
+            language:           'json/jsonc',
+            languageOptions:    { allowTrailingCommas: true },
         },
     );
     return config;

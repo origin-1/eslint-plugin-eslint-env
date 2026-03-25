@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "module": "commonjs",
     "noEmit": true,
+    "noUncheckedSideEffectImports": true,
+    "rootDir": "lib",
     "strict": true,
+    "target": "es2020",
     "types": [],
+    "verbatimModuleSyntax": true,
   }
 }
